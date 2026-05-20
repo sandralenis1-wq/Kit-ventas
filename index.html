@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kit de Ventas — De Venta en Venta</title>
+
+<!-- ⚠️ INSTRUCCIÓN: Reemplaza la URL de abajo con la URL de tu Worker -->
+<script>
+  const WORKER_URL = "https://TU-WORKER.TU-USUARIO.workers.dev";
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:#0f0f0f;color:#f0ebe2;min-height:100vh}
+a{color:inherit}
+
+/* HEADER */
+.hdr{background:#0f0f0f;border-bottom:1px solid #1e1e1e;padding:0 1.2rem;height:52px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
+.hdr-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.hdr-logo span{color:#e8380d}
+.hdr-sub{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#444}
+
+/* HERO */
+.hero{background:linear-gradient(160deg,#141414 0%,#1a0a06 100%);
+  padding:2.5rem 1.2rem 2rem;text-align:center;border-bottom:1px solid #1e1e1e}
+.pill{display:inline-block;background:#e8380d;color:#fff;font-family:'Syne',sans-serif;
+  font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;padding:.25rem .8rem;margin-bottom:1rem}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(1.7rem,5vw,2.8rem);font-weight:800;
+  line-height:1.05;margin-bottom:.7rem}
+.hero h1 em{font-style:normal;color:#e8380d}
+.hero p{max-width:440px;margin:0 auto 1.8rem;color:#555;font-size:.85rem;line-height:1.7}
+
+/* TABS */
+.tab-nav{display:flex;max-width:660px;margin:0 auto;border:1px solid #222;overflow:hidden}
+.tab-btn{flex:1;background:#161616;border:none;color:#555;cursor:pointer;
+  padding:.85rem .4rem .7rem;font-family:'Syne',sans-serif;font-size:.62rem;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;display:flex;flex-direction:column;
+  align-items:center;gap:.3rem;border-right:1px solid #222;transition:all .2s;line-height:1.3}
+.tab-btn:last-child{border-right:none}
+.tab-num{font-size:1.2rem;font-weight:800;color:#2a2a2a;transition:color .2s}
+.tab-btn.active{background:#0f0f0f;color:#e8380d}
+.tab-btn.active .tab-num{color:#e8380d}
+.tab-btn.done{color:#3a7a45}
+.tab-btn.done .tab-num{color:#3a7a45}
+
+/* MAIN */
+.main{max-width:660px;margin:0 auto;padding:1.8rem 1rem 5rem}
+
+/* TOOL HEADER */
+.tool-hdr{display:flex;gap:.9rem;align-items:flex-start;margin-bottom:1.4rem;
+  padding-bottom:1.2rem;border-bottom:1px solid #1e1e1e}
+.big-num{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:#1a1a1a;
+  line-height:1;-webkit-text-stroke:1.5px #2a2a2a;min-width:46px;user-select:none}
+.badge{display:inline-block;background:#e8380d;color:#fff;font-family:'Syne',sans-serif;
+  font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;margin-bottom:.3rem}
+.tool-title{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;margin-bottom:.2rem}
+.tool-desc{color:#555;font-size:.82rem;line-height:1.6}
+
+/* PROGRESS */
+.prog{height:2px;background:#1e1e1e;margin-bottom:1.4rem}
+.prog-fill{height:100%;background:#e8380d;transition:width .4s ease;width:0%}
+
+/* CARDS */
+.card{background:#141414;border:1px solid #222;padding:1.1rem;margin-bottom:.7rem}
+.card:focus-within{border-color:#e8380d}
+.card.ok{border-left:2px solid #3a7a45}
+.step-lbl{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.14em;
+  text-transform:uppercase;color:#333;margin-bottom:.25rem}
+.step-q{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;
+  color:#f0ebe2;margin-bottom:.2rem}
+.step-hint{font-size:.75rem;color:#444;line-height:1.55;margin-bottom:.55rem;font-style:italic}
+.ex{background:#1a1710;border-left:2px solid #c8932a;padding:.4rem .7rem;
+  font-size:.75rem;color:#8a7040;line-height:1.5;margin-bottom:.65rem}
+.ex strong{display:block;color:#c8932a;font-size:.6rem;letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:.12rem}
+textarea{width:100%;background:#0f0f0f;border:1px solid #252525;color:#f0ebe2;
+  font-family:'Lato',sans-serif;font-size:.86rem;padding:.65rem .85rem;resize:vertical;
+  min-height:80px;outline:none;line-height:1.6;transition:border-color .2s}
+textarea:focus{border-color:#e8380d}
+textarea::placeholder{color:#333}
+.wc{text-align:right;font-size:.65rem;color:#333;margin-top:.22rem}
+
+/* DIVIDERS */
+.sec{background:#141414;border:1px solid #1e1e1e;padding:.65rem 1rem;margin:1rem 0 .6rem}
+.sec-lbl{font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.12em;
+  text-transform:uppercase;color:#3a3a3a;margin-bottom:.15rem}
+.sec-txt{font-size:.78rem;color:#3a3a3a}
+
+/* SPIN */
+.spin-row{display:flex;align-items:center;gap:.6rem;margin:.85rem 0 .25rem}
+.spin-l{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1;min-width:30px}
+.s-c{color:#e8380d}.p-c{color:#c8932a}.i-c{color:#3a8fa0}.n-c{color:#3a7a45}
+.spin-sub{font-size:.7rem;color:#444;font-family:'Syne',sans-serif;
+  letter-spacing:.06em;text-transform:uppercase}
+
+/* PREVIEW */
+.preview{background:#111;border:1px solid #1e1e1e;padding:1.2rem;margin:1rem 0;
+  position:relative;display:none}
+.preview::before{content:'TU PITCH COMPLETO';position:absolute;top:-8px;left:1rem;
+  background:#1e1e1e;color:#555;font-family:'Syne',sans-serif;font-size:.58rem;
+  letter-spacing:.1em;padding:.12rem .5rem}
+.preview p{font-size:.88rem;line-height:1.85;color:#999}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem}
+.btn{font-family:'Syne',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;padding:.65rem 1.1rem;border:1.5px solid #2a2a2a;
+  background:transparent;color:#666;cursor:pointer;transition:all .18s}
+.btn:hover{border-color:#666;color:#f0ebe2}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-red{background:#e8380d;border-color:#e8380d;color:#fff}
+.btn-red:hover{background:#c42a00;border-color:#c42a00}
+.btn-green{background:#1a3d1f;border-color:#3a7a45;color:#5aaa6a}
+.btn-green:hover{background:#214d27;color:#7acc87}
+.btn-gold{background:#221a08;border-color:#c8932a;color:#c8932a}
+.btn-gold:hover{background:#2e230c}
+
+/* AI BOX */
+.ai-box{background:#0c1420;border:1px solid #1a2e50;padding:1.2rem;margin-top:1rem;display:none}
+.ai-hdr{font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.14em;
+  text-transform:uppercase;color:#3a6aa0;margin-bottom:.7rem}
+.ai-txt{font-size:.83rem;color:#7aa8d0;line-height:1.75;white-space:pre-wrap}
+.ai-load{display:flex;align-items:center;gap:.5rem;color:#3a6aa0;font-size:.8rem}
+.dot{width:5px;height:5px;background:#3a6aa0;border-radius:50%;
+  animation:pu 1.2s infinite;display:inline-block}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes pu{0%,60%,100%{opacity:.25;transform:scale(1)}30%{opacity:1;transform:scale(1.35)}}
+
+/* PDF READY BAR */
+.pdf-bar{background:#0e1f12;border:1px solid #254a2c;padding:.9rem 1.1rem;
+  margin-top:.8rem;display:none;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+.pdf-bar-txt strong{display:block;font-family:'Syne',sans-serif;font-size:.68rem;
+  letter-spacing:.06em;text-transform:uppercase;color:#5aaa6a;margin-bottom:.1rem}
+.pdf-bar-txt span{font-size:.78rem;color:#3a6a42}
+
+/* ERROR */
+.err-box{background:#200a08;border:1px solid #5a1a12;padding:.8rem 1rem;
+  margin-top:.8rem;font-size:.8rem;color:#d07060;line-height:1.5;display:none}
+
+/* DONE */
+.done-banner{background:linear-gradient(135deg,#0e1f12,#0c1a0f);border:1px solid #254a2c;
+  padding:1.8rem;text-align:center;margin-top:1.3rem;display:none}
+.done-banner h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;
+  color:#5aaa6a;margin-bottom:.4rem}
+.done-banner p{color:#3a6a42;font-size:.82rem;margin-bottom:1.1rem}
+
+/* TOOL SECTIONS */
+.tool-section{display:none}
+.tool-section.active{display:block}
+
+@media(max-width:480px){
+  .tool-hdr{flex-direction:column;gap:.4rem}
+  .big-num{font-size:2.2rem}
+  .tab-btn{font-size:.56rem;padding:.7rem .2rem .55rem}
+  .main{padding:1.2rem .7rem 5rem}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">De <span>Venta</span> en Venta</div>
+  <div class="hdr-sub">Kit Comercial</div>
+</header>
+
+<div class="hero">
+  <div class="pill">Taller de Ventas</div>
+  <h1>Construye tus<br><em>armas de venta</em></h1>
+  <p>3 herramientas. Diligencia cada una, recibe análisis IA personalizado y descarga tu PDF.</p>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTool(0)" id="tab0">
+      <span class="tab-num" id="tnum0">01</span>Elevator Pitch
+    </button>
+    <button class="tab-btn" onclick="switchTool(1)" id="tab1">
+      <span class="tab-num" id="tnum1">02</span>Propuesta de Valor
+    </button>
+    <button class="tab-btn" onclick="switchTool(2)" id="tab2">
+      <span class="tab-num" id="tnum2">03</span>SPIN Selling
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════ PITCH ═══════════════════════════ -->
+<div class="tool-section active" id="section0">
+  <div class="tool-hdr">
+    <div class="big-num">01</div>
+    <div>
+      <div class="badge">60 segundos para conquistar</div>
+      <div class="tool-title">Elevator Pitch</div>
+      <div class="tool-desc">Un discurso corto, memorable y contundente. Explica quién eres, qué haces y por qué importas antes de que el ascensor llegue al piso.</div>
+    </div>
+  </div>
+  <div class="prog"><div class="prog-fill" id="prog0"></div></div>
+
+  <div class="card" id="card0-0">
+    <div class="step-lbl">Paso 1 de 5</div>
+    <div class="step-q">¿Quién eres y qué hace tu empresa?</div>
+    <div class="step-hint">Preséntate de forma humana. Nombre, empresa y en qué negocio estás realmente.</div>
+    <div class="ex"><strong>Ejemplo</strong>Soy Carlos Ruiz, fundador de NutriBox — llevamos alimentación saludable directamente a oficinas en Bogotá.</div>
+    <textarea id="pitch_quien" placeholder="Escribe aquí..." oninput="onInput(0,0,'pitch_quien')"></textarea>
+    <div class="wc" id="wc_pitch_quien">0 palabras</div>
+  </div>
+
+  <div class="card" id="card0-1">
+    <div class="step-lbl">Paso 2 de 5</div>
+    <div class="step-q">¿Qué problema resuelves?</div>
+    <div class="step-hint">Nombra el dolor real de tu cliente. Cuanto más específico, más conecta.</div>
+    <div class="ex"><strong>Ejemplo</strong>Los trabajadores pasan 8+ horas con acceso solo a comida chatarra, lo que destruye su energía y productividad.</div>
+    <textarea id="pitch_problema" placeholder="Escribe aquí..." oninput="onInput(0,1,'pitch_problema')"></textarea>
+    <div class="wc" id="wc_pitch_problema">0 palabras</div>
+  </div>
+
+  <div class="card" id="card0-2">
+    <div class="step-lbl">Paso 3 de 5</div>
+    <div class="step-q">¿Cuál es tu solución única?</div>
+    <div class="step-hint">Máximo 2 oraciones. Sin tecnicismos. Que cualquiera lo entienda.</div>
+    <div class="ex"><strong>Ejemplo</strong>Llevamos cajas semanales con almuerzos saludables listos para consumir, a precio fijo mensual por empresa.</div>
+    <textarea id="pitch_solucion" placeholder="Escribe aquí..." oninput="onInput(0,2,'pitch_solucion')"></textarea>
+    <div class="wc" id="wc_pitch_solucion">0 palabras</div>
+  </div>
+
+  <div class="card" id="card0-3">
+    <div class="step-lbl">Paso 4 de 5</div>
+    <div class="step-q">¿Por qué tú? ¿Qué te diferencia?</div>
+    <div class="step-hint">Un dato concreto o logro que haga pensar "esto no lo hace cualquiera".</div>
+    <div class="ex"><strong>Ejemplo</strong>Somos los únicos con nutricionista certificado en cada menú. 40 empresas atendidas, 0 cancelaciones en el primer año.</div>
+    <textarea id="pitch_diferencia" placeholder="Escribe aquí..." oninput="onInput(0,3,'pitch_diferencia')"></textarea>
+    <div class="wc" id="wc_pitch_diferencia">0 palabras</div>
+  </div>
+
+  <div class="card" id="card0-4">
+    <div class="step-lbl">Paso 5 de 5</div>
+    <div class="step-q">¿Qué quieres que haga la persona? (Call to Action)</div>
+    <div class="step-hint">Cierra con una invitación clara y sin presión.</div>
+    <div class="ex"><strong>Ejemplo</strong>Me gustaría mostrarte cómo funciona en 15 minutos. ¿Podemos agendar una llamada esta semana?</div>
+    <textarea id="pitch_cta" placeholder="Escribe aquí..." oninput="onInput(0,4,'pitch_cta')"></textarea>
+    <div class="wc" id="wc_pitch_cta">0 palabras</div>
+  </div>
+
+  <div class="preview" id="preview0">
+    <p id="preview0_txt"></p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-red" id="aiBtn0" onclick="analyzeAI(0)" disabled>✦ Analizar con IA</button>
+    <button class="btn btn-green" id="pdfBtn0" onclick="downloadPDF(0)" disabled>↓ Descargar PDF</button>
+    <button class="btn" onclick="switchTool(1)">Siguiente →</button>
+  </div>
+  <div class="err-box" id="err0"></div>
+  <div class="ai-box" id="aiBox0">
+    <div class="ai-hdr">✦ Análisis IA — Elevator Pitch</div>
+    <div id="aiContent0"></div>
+  </div>
+  <div class="pdf-bar" id="pdfBar0">
+    <div class="pdf-bar-txt"><strong>✓ Análisis listo</strong><span>El PDF incluirá tus respuestas + análisis IA.</span></div>
+    <button class="btn btn-green" onclick="downloadPDF(0)">↓ PDF completo</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ VALOR ═══════════════════════════ -->
+<div class="tool-section" id="section1">
+  <div class="tool-hdr">
+    <div class="big-num">02</div>
+    <div>
+      <div class="badge">Value Proposition Canvas</div>
+      <div class="tool-title">Propuesta de Valor</div>
+      <div class="tool-desc">Conecta exactamente lo que tu cliente quiere con lo que tú ofreces. Basado en el modelo de Osterwalder.</div>
+    </div>
+  </div>
+  <div class="prog"><div class="prog-fill" id="prog1"></div></div>
+
+  <div class="sec"><div class="sec-lbl">Perfil del Cliente</div><div class="sec-txt">Pasos 1-3: entiende profundamente a tu cliente antes de diseñar tu oferta.</div></div>
+
+  <div class="card" id="card1-0">
+    <div class="step-lbl">Paso 1 de 7 — Perfil cliente</div>
+    <div class="step-q">¿Cuáles son los trabajos de tu cliente? (Jobs to be done)</div>
+    <div class="step-hint">¿Qué tareas intenta completar? ¿Qué metas funcionales, sociales o emocionales persigue?</div>
+    <div class="ex"><strong>Ejemplo</strong>Aumentar ventas del equipo, quedar bien con superiores, simplificar la gestión sin contratar más personal.</div>
+    <textarea id="valor_jobs" placeholder="Escribe aquí..." oninput="onInput(1,0,'valor_jobs')"></textarea>
+    <div class="wc" id="wc_valor_jobs">0 palabras</div>
+  </div>
+
+  <div class="card" id="card1-1">
+    <div class="step-lbl">Paso 2 de 7 — Perfil cliente</div>
+    <div class="step-q">¿Cuáles son sus dolores? (Pains)</div>
+    <div class="step-hint">Obstáculos, frustraciones, miedos. Lo que le quita el sueño o complica su vida.</div>
+    <div class="ex"><strong>Ejemplo</strong>Vendedores sin seguimiento, clientes perdidos, CRM que nadie usa, reportes que toman horas.</div>
+    <textarea id="valor_pains" placeholder="Escribe aquí..." oninput="onInput(1,1,'valor_pains')"></textarea>
+    <div class="wc" id="wc_valor_pains">0 palabras</div>
+  </div>
+
+  <div class="card" id="card1-2">
+    <div class="step-lbl">Paso 3 de 7 — Perfil cliente</div>
+    <div class="step-q">¿Qué ganancias busca? (Gains)</div>
+    <div class="step-hint">Beneficios esperados y sorpresas positivas que lo deleitarían.</div>
+    <div class="ex"><strong>Ejemplo</strong>Cerrar más negocios con el mismo equipo, ver el pipeline en tiempo real, reuniones productivas.</div>
+    <textarea id="valor_gains" placeholder="Escribe aquí..." oninput="onInput(1,2,'valor_gains')"></textarea>
+    <div class="wc" id="wc_valor_gains">0 palabras</div>
+  </div>
+
+  <div class="sec"><div class="sec-lbl">Mapa de Valor</div><div class="sec-txt">Pasos 4-6: diseña tu oferta para encajar exactamente en los dolores y ganancias de arriba.</div></div>
+
+  <div class="card" id="card1-3">
+    <div class="step-lbl">Paso 4 de 7 — Mapa de valor</div>
+    <div class="step-q">¿Cuáles son tus productos y servicios?</div>
+    <div class="step-hint">No solo el producto — incluye servicios, garantías y experiencias incluidas.</div>
+    <div class="ex"><strong>Ejemplo</strong>Software CRM + implementación + capacitación + soporte 24/7 + reportes automáticos.</div>
+    <textarea id="valor_productos" placeholder="Escribe aquí..." oninput="onInput(1,3,'valor_productos')"></textarea>
+    <div class="wc" id="wc_valor_productos">0 palabras</div>
+  </div>
+
+  <div class="card" id="card1-4">
+    <div class="step-lbl">Paso 5 de 7 — Mapa de valor</div>
+    <div class="step-q">¿Cómo alivias los dolores? (Pain Relievers)</div>
+    <div class="step-hint">Para cada dolor, explica cómo tu oferta lo elimina o reduce. Sé específico.</div>
+    <div class="ex"><strong>Ejemplo</strong>Automatizamos el seguimiento para que el vendedor no olvide ninguna oportunidad — alertas en WhatsApp.</div>
+    <textarea id="valor_relievers" placeholder="Escribe aquí..." oninput="onInput(1,4,'valor_relievers')"></textarea>
+    <div class="wc" id="wc_valor_relievers">0 palabras</div>
+  </div>
+
+  <div class="card" id="card1-5">
+    <div class="step-lbl">Paso 6 de 7 — Mapa de valor</div>
+    <div class="step-q">¿Cómo creas ganancias? (Gain Creators)</div>
+    <div class="step-hint">¿Qué produce tu oferta que el cliente espera o no espera?</div>
+    <div class="ex"><strong>Ejemplo</strong>Dashboard en tiempo real desde el celular. Reportes automáticos listos para junta directiva.</div>
+    <textarea id="valor_creators" placeholder="Escribe aquí..." oninput="onInput(1,5,'valor_creators')"></textarea>
+    <div class="wc" id="wc_valor_creators">0 palabras</div>
+  </div>
+
+  <div class="card" id="card1-6">
+    <div class="step-lbl">Paso 7 de 7 — Síntesis</div>
+    <div class="step-q">Escribe tu Propuesta de Valor en 1-2 oraciones</div>
+    <div class="step-hint">Fórmula: "Para [cliente] que [problema], [producto] es [categoría] que [beneficio único], a diferencia de [alternativa]."</div>
+    <div class="ex"><strong>Ejemplo</strong>Para gerentes comerciales que pierden negocios por falta de seguimiento, SalesFlow es el CRM que trabaja solo.</div>
+    <textarea id="valor_sintesis" placeholder="Escribe aquí..." oninput="onInput(1,6,'valor_sintesis')" style="min-height:90px"></textarea>
+    <div class="wc" id="wc_valor_sintesis">0 palabras</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-red" id="aiBtn1" onclick="analyzeAI(1)" disabled>✦ Analizar con IA</button>
+    <button class="btn btn-green" id="pdfBtn1" onclick="downloadPDF(1)" disabled>↓ Descargar PDF</button>
+    <button class="btn" onclick="switchTool(2)">Siguiente →</button>
+  </div>
+  <div class="err-box" id="err1"></div>
+  <div class="ai-box" id="aiBox1">
+    <div class="ai-hdr">✦ Análisis IA — Propuesta de Valor</div>
+    <div id="aiContent1"></div>
+  </div>
+  <div class="pdf-bar" id="pdfBar1">
+    <div class="pdf-bar-txt"><strong>✓ Análisis listo</strong><span>El PDF incluirá tus respuestas + análisis IA.</span></div>
+    <button class="btn btn-green" onclick="downloadPDF(1)">↓ PDF completo</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SPIN ═══════════════════════════ -->
+<div class="tool-section" id="section2">
+  <div class="tool-hdr">
+    <div class="big-num">03</div>
+    <div>
+      <div class="badge">Técnica Rackham — Venta Consultiva</div>
+      <div class="tool-title">SPIN Selling</div>
+      <div class="tool-desc">El método de venta consultiva más efectivo. Preguntas que llevan al cliente a descubrir por sí mismo que te necesita.</div>
+    </div>
+  </div>
+  <div class="prog"><div class="prog-fill" id="prog2"></div></div>
+
+  <div class="sec"><div class="sec-lbl">S→P→I→N</div><div class="sec-txt">Situación → Problema → Implicación → Necesidad de Pago. Cada pregunta lleva al cliente un paso más cerca.</div></div>
+
+  <div class="card" id="card2-0">
+    <div class="step-lbl">Contexto</div>
+    <div class="step-q">¿A quién le vas a vender? Describe tu cliente objetivo.</div>
+    <div class="step-hint">Define cargo, sector, tamaño de empresa o perfil del decisor.</div>
+    <div class="ex"><strong>Ejemplo</strong>Gerente Comercial de empresa manufacturera (50-200 empleados), sector B2B, equipo de 5-15 vendedores.</div>
+    <textarea id="spin_contexto" placeholder="Escribe aquí..." oninput="onInput(2,0,'spin_contexto')"></textarea>
+    <div class="wc" id="wc_spin_contexto">0 palabras</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.6rem;margin:.85rem 0 .25rem">
+    <div class="spin-l s-c">S</div>
+    <div class="spin-sub">Situación</div>
+  </div>
+  <div class="card" id="card2-1">
+    <div class="step-lbl">Preguntas de Situación</div>
+    <div class="step-q">¿Qué preguntas usarás para entender el contexto actual del cliente?</div>
+    <div class="step-hint">Preguntas de hecho. Máximo 3-4. No hagas demasiadas — cansan al cliente.</div>
+    <div class="ex"><strong>Ejemplo</strong>¿Cuántas personas tiene en ventas? ¿Qué herramienta usa para gestionar clientes? ¿Cómo miden el avance del equipo?</div>
+    <textarea id="spin_s" placeholder="Escribe tus preguntas de situación..." oninput="onInput(2,1,'spin_s')"></textarea>
+    <div class="wc" id="wc_spin_s">0 palabras</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.6rem;margin:.85rem 0 .25rem">
+    <div class="spin-l p-c">P</div>
+    <div class="spin-sub">Problema</div>
+  </div>
+  <div class="card" id="card2-2">
+    <div class="step-lbl">Preguntas de Problema</div>
+    <div class="step-q">¿Qué preguntas revelarán sus dificultades y frustraciones?</div>
+    <div class="step-hint">El cliente empieza a ver que algo no funciona. Estas preguntas abren la conversación real.</div>
+    <div class="ex"><strong>Ejemplo</strong>¿Le resulta difícil dar seguimiento a todos los prospectos? ¿Cuántos negocios cree que pierde por no contactar a tiempo?</div>
+    <textarea id="spin_p" placeholder="Escribe tus preguntas de problema..." oninput="onInput(2,2,'spin_p')"></textarea>
+    <div class="wc" id="wc_spin_p">0 palabras</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.6rem;margin:.85rem 0 .25rem">
+    <div class="spin-l i-c">I</div>
+    <div class="spin-sub">Implicación</div>
+  </div>
+  <div class="card" id="card2-3">
+    <div class="step-lbl">Preguntas de Implicación</div>
+    <div class="step-q">¿Qué preguntas mostrarán las consecuencias de no resolver el problema?</div>
+    <div class="step-hint">Las más poderosas. Hacen que el problema se sienta urgente y costoso para el cliente.</div>
+    <div class="ex"><strong>Ejemplo</strong>Si sigue perdiendo el 20% de prospectos por falta de seguimiento, ¿qué impacto tiene en las ventas anuales?</div>
+    <textarea id="spin_i" placeholder="Escribe tus preguntas de implicación..." oninput="onInput(2,3,'spin_i')"></textarea>
+    <div class="wc" id="wc_spin_i">0 palabras</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.6rem;margin:.85rem 0 .25rem">
+    <div class="spin-l n-c">N</div>
+    <div class="spin-sub">Necesidad de Pago</div>
+  </div>
+  <div class="card" id="card2-4">
+    <div class="step-lbl">Preguntas de Necesidad de Pago</div>
+    <div class="step-q">¿Qué preguntas llevarán al cliente a describir el valor de la solución?</div>
+    <div class="step-hint">El cliente articula el beneficio con sus propias palabras. Esto elimina objeciones.</div>
+    <div class="ex"><strong>Ejemplo</strong>¿Qué valor tendría ver en tiempo real cuántos negocios están activos? Si su equipo cerrara 15% más, ¿qué significaría?</div>
+    <textarea id="spin_n" placeholder="Escribe tus preguntas de necesidad..." oninput="onInput(2,4,'spin_n')"></textarea>
+    <div class="wc" id="wc_spin_n">0 palabras</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-red" id="aiBtn2" onclick="analyzeAI(2)" disabled>✦ Analizar con IA</button>
+    <button class="btn btn-green" id="pdfBtn2" onclick="downloadPDF(2)" disabled>↓ Descargar PDF</button>
+  </div>
+  <div class="err-box" id="err2"></div>
+  <div class="ai-box" id="aiBox2">
+    <div class="ai-hdr">✦ Análisis IA — SPIN Selling</div>
+    <div id="aiContent2"></div>
+  </div>
+  <div class="pdf-bar" id="pdfBar2">
+    <div class="pdf-bar-txt"><strong>✓ Análisis listo</strong><span>El PDF incluirá tus respuestas + análisis IA.</span></div>
+    <button class="btn btn-green" onclick="downloadPDF(2)">↓ PDF completo</button>
+  </div>
+</div>
+
+<!-- DONE BANNER -->
+<div class="done-banner" id="doneBanner">
+  <h3>🎯 ¡Kit completo!</h3>
+  <p>Completaste las 3 herramientas con análisis IA. Descarga cada PDF.</p>
+  <div class="btn-row" style="justify-content:center">
+    <button class="btn btn-gold" onclick="downloadPDF(0)">↓ PDF Pitch</button>
+    <button class="btn btn-gold" onclick="downloadPDF(1)">↓ PDF Valor</button>
+    <button class="btn btn-gold" onclick="downloadPDF(2)">↓ PDF SPIN</button>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+const state = {
+  answers: [
+    { quien:"", problema:"", solucion:"", diferencia:"", cta:"" },
+    { jobs:"", pains:"", gains:"", productos:"", relievers:"", creators:"", sintesis:"" },
+    { contexto:"", s:"", p:"", i:"", n:"" }
+  ],
+  aiText: [null, null, null],
+  done: [false, false, false],
+  filledCount: [0, 0, 0],
+};
+
+const STEPS_COUNT = [5, 7, 5];
+
+const FIELD_MAP = [
+  ["pitch_quien","pitch_problema","pitch_solucion","pitch_diferencia","pitch_cta"],
+  ["valor_jobs","valor_pains","valor_gains","valor_productos","valor_relievers","valor_creators","valor_sintesis"],
+  ["spin_contexto","spin_s","spin_p","spin_i","spin_n"]
+];
+
+const ANS_KEYS = [
+  ["quien","problema","solucion","diferencia","cta"],
+  ["jobs","pains","gains","productos","relievers","creators","sintesis"],
+  ["contexto","s","p","i","n"]
+];
+
+// ─── INPUT HANDLER ────────────────────────────────────────────
+function onInput(toolIdx, stepIdx, fieldId) {
+  const val = document.getElementById(fieldId).value;
+  const key = ANS_KEYS[toolIdx][stepIdx];
+  state.answers[toolIdx][key] = val;
+
+  // word count
+  const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+  document.getElementById("wc_" + fieldId).textContent = words + " palabras";
+
+  // card ok
+  const card = document.getElementById("card" + toolIdx + "-" + stepIdx);
+  card.classList.toggle("ok", val.trim().length > 8);
+
+  // count filled
+  const filled = ANS_KEYS[toolIdx].filter(k => (state.answers[toolIdx][k]||"").trim().length > 8).length;
+  state.filledCount[toolIdx] = filled;
+
+  // progress
+  document.getElementById("prog" + toolIdx).style.width =
+    Math.round((filled / STEPS_COUNT[toolIdx]) * 100) + "%";
+
+  // enable buttons
+  const hasAny = filled > 0;
+  document.getElementById("aiBtn" + toolIdx).disabled = !hasAny;
+  document.getElementById("pdfBtn" + toolIdx).disabled = !hasAny;
+
+  // pitch preview
+  if (toolIdx === 0) updatePitchPreview();
+}
+
+function updatePitchPreview() {
+  const a = state.answers[0];
+  const parts = [a.quien, a.problema, a.solucion, a.diferencia, a.cta]
+    .map(v => v.trim()).filter(Boolean);
+  const preview = document.getElementById("preview0");
+  if (parts.length > 0) {
+    preview.style.display = "block";
+    document.getElementById("preview0_txt").textContent = parts.join(" ");
+  } else {
+    preview.style.display = "none";
+  }
+}
+
+// ─── SWITCH TOOL ─────────────────────────────────────────────
+function switchTool(idx) {
+  document.querySelectorAll(".tool-section").forEach((s,i) => {
+    s.classList.toggle("active", i === idx);
+  });
+  document.querySelectorAll(".tab-btn").forEach((b,i) => {
+    b.classList.toggle("active", i === idx);
+  });
+  window.scrollTo({top: 0, behavior:"smooth"});
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────
+async function analyzeAI(toolIdx) {
+  const btn = document.getElementById("aiBtn" + toolIdx);
+  const box = document.getElementById("aiBox" + toolIdx);
+  const content = document.getElementById("aiContent" + toolIdx);
+  const errBox = document.getElementById("err" + toolIdx);
+
+  btn.disabled = true;
+  btn.textContent = "Analizando...";
+  errBox.style.display = "none";
+  box.style.display = "block";
+  content.innerHTML = '<div class="ai-load"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:.4rem">Analizando tu información...</span></div>';
+
+  const toolIds = ["pitch", "valor", "spin"];
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        toolId: toolIds[toolIdx],
+        answers: state.answers[toolIdx]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    state.aiText[toolIdx] = data.result;
+    content.classList.add("ai-txt");
+    content.textContent = data.result;
+    state.done[toolIdx] = true;
+
+    // mark tab done
+    document.getElementById("tnum" + toolIdx).textContent = "✓";
+    document.getElementById("tab" + toolIdx).classList.add("done");
+
+    // show pdf bar
+    document.getElementById("pdfBar" + toolIdx).style.display = "flex";
+
+    // check all done
+    if (state.done[0] && state.done[1] && state.done[2]) {
+      document.getElementById("doneBanner").style.display = "block";
+    }
+
+  } catch(e) {
+    box.style.display = "none";
+    errBox.style.display = "block";
+    errBox.textContent = "⚠ Error: " + e.message + ". Verifica que el Worker esté activo y la URL correcta.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✦ Analizar con IA";
+  }
+}
+
+// ─── PDF GENERATOR ───────────────────────────────────────────
+const TOOL_META = [
+  { title:"Elevator Pitch", badge:"60 segundos para conquistar",
+    keys:["quien","problema","solucion","diferencia","cta"],
+    labels:["¿Quién eres?","¿Qué problema resuelves?","¿Cuál es tu solución?","¿Por qué tú?","Call to Action"] },
+  { title:"Propuesta de Valor", badge:"Value Proposition Canvas",
+    keys:["jobs","pains","gains","productos","relievers","creators","sintesis"],
+    labels:["Jobs to be done","Dolores (Pains)","Ganancias (Gains)","Productos y servicios","Pain Relievers","Gain Creators","Síntesis"] },
+  { title:"SPIN Selling", badge:"Técnica Rackham",
+    keys:["contexto","s","p","i","n"],
+    labels:["Cliente objetivo","Preguntas Situación","Preguntas Problema","Preguntas Implicación","Preguntas Necesidad de Pago"] },
+];
+
+async function downloadPDF(toolIdx) {
+  const btn = document.getElementById("pdfBtn" + toolIdx);
+  btn.disabled = true;
+  btn.textContent = "Generando...";
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"mm", format:"a4" });
+    const W = 210, M = 15, MW = W - M*2;
+    const meta = TOOL_META[toolIdx];
+    const ans = state.answers[toolIdx];
+    const aiText = state.aiText[toolIdx];
+
+    // helpers
+    const bg = (r,g,b) => doc.setFillColor(r,g,b);
+    const tc = (r,g,b) => doc.setTextColor(r,g,b);
+    const fc = (r,g,b) => doc.setDrawColor(r,g,b);
+    const newPage = () => {
+      doc.addPage();
+      bg(15,15,15); doc.rect(0,0,W,297,"F");
+      return 14;
+    };
+    const checkPage = (y, needed) => y + needed > 272 ? newPage() : y;
+
+    // Background
+    bg(15,15,15); doc.rect(0,0,W,297,"F");
+    // Red bar
+    bg(232,56,13); doc.rect(0,0,W,7,"F");
+
+    let y = 17;
+
+    // Header
+    doc.setFontSize(7); tc(232,56,13); doc.setFont("helvetica","bold");
+    doc.text("DE VENTA EN VENTA", W/2, y, {align:"center"});
+    y += 5;
+    doc.setFontSize(18); tc(240,235,226); doc.setFont("helvetica","bold");
+    doc.text(meta.title.toUpperCase(), W/2, y, {align:"center"});
+    y += 5;
+    doc.setFontSize(8); tc(120,110,90); doc.setFont("helvetica","normal");
+    doc.text(meta.badge, W/2, y, {align:"center"});
+    y += 8;
+    fc(40,40,40); doc.setLineWidth(0.25);
+    doc.line(M, y, W-M, y);
+    y += 7;
+
+    // Steps
+    for (let i = 0; i < meta.keys.length; i++) {
+      const val = (ans[meta.keys[i]] || "").trim();
+      if (!val) continue;
+
+      y = checkPage(y, 20);
+
+      // label
+      doc.setFontSize(6.5); tc(70,70,70); doc.setFont("helvetica","bold");
+      doc.text(meta.labels[i].toUpperCase(), M, y);
+      y += 4;
+
+      // answer box
+      doc.setFontSize(9);
+      const lines = doc.splitTextToSize(val, MW - 6);
+      const boxH = lines.length * 4.8 + 8;
+      y = checkPage(y, boxH + 4);
+
+      bg(22,20,18); fc(40,38,34); doc.setLineWidth(0.2);
+      doc.rect(M, y, MW, boxH, "FD");
+      tc(170,158,135); doc.setFont("helvetica","normal");
+      lines.forEach((ln, li) => doc.text(ln, M+4, y+6+li*4.8));
+      y += boxH + 6;
+    }
+
+    // Pitch preview
+    if (toolIdx === 0) {
+      const a = state.answers[0];
+      const full = [a.quien,a.problema,a.solucion,a.diferencia,a.cta]
+        .map(v=>v.trim()).filter(Boolean).join(" ");
+      if (full) {
+        y = checkPage(y, 20);
+        const fLines = doc.splitTextToSize(full, MW-8);
+        const fH = fLines.length*5+14;
+        y = checkPage(y, fH);
+        bg(20,16,10); fc(180,130,40); doc.setLineWidth(0.3);
+        doc.rect(M, y, MW, fH, "FD");
+        doc.setFontSize(6.5); tc(180,130,40); doc.setFont("helvetica","bold");
+        doc.text("TU PITCH COMPLETO", M+4, y+5.5);
+        doc.setFontSize(9); tc(200,182,148); doc.setFont("helvetica","normal");
+        fLines.forEach((ln,li) => doc.text(ln, M+4, y+11+li*5));
+        y += fH + 7;
+      }
+    }
+
+    // AI analysis
+    if (aiText) {
+      y = checkPage(y, 20);
+      const aiLines = doc.splitTextToSize(aiText, MW-8);
+      const aiH = aiLines.length*4.5+14;
+      y = checkPage(y, aiH);
+      bg(13,20,32); fc(28,46,78); doc.setLineWidth(0.25);
+      doc.rect(M, y, MW, aiH, "FD");
+      doc.setFontSize(6.5); tc(60,100,160); doc.setFont("helvetica","bold");
+      doc.text("ANALISIS Y SUGERENCIAS IA", M+4, y+5.5);
+      doc.setFontSize(8.5); tc(120,165,210); doc.setFont("helvetica","normal");
+      aiLines.forEach((ln,li) => doc.text(ln, M+4, y+11+li*4.5));
+    }
+
+    // Footer on all pages
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      bg(232,56,13); doc.rect(0,290,W,7,"F");
+      doc.setFontSize(6.5); tc(255,255,255); doc.setFont("helvetica","normal");
+      doc.text("De Venta en Venta — Kit de Herramientas Comerciales", W/2, 295, {align:"center"});
+    }
+
+    doc.save(meta.title.toLowerCase().replace(/ /g,"-") + "-ventas.pdf");
+
+  } catch(e) {
+    alert("Error al generar PDF: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "↓ Descargar PDF";
+  }
+}
+</script>
+</body>
+</html>
